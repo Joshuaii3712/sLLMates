@@ -29,6 +29,8 @@ if __name__ == "__main__":
 
     print("초기 설정 시작...")
     initialize()
+    print("초기 설정 끝")
 
     print("RAG 챗봇 UI 시작...")
     launch_app()
+    print("RAG 챗봇 UI 끝")

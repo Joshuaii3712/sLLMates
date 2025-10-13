@@ -8,7 +8,7 @@ from src import config
 
 def init_chat_metadata_db():
     """
-    채팅 메타데이터 테이블이 없으면 생성합니다.
+    채팅 메타데이터 테이블이 없으면 생성
     """
     conn = sqlite3.connect(config.SQLITE_DB_FILE)
     cursor = conn.cursor()
@@ -23,6 +23,7 @@ def init_chat_metadata_db():
     ''')
     conn.commit()
     conn.close()
+
 
 def save_chat_metadata(thread_id: str, chat_name: str):
     try:
@@ -39,6 +40,7 @@ def save_chat_metadata(thread_id: str, chat_name: str):
     finally:
         conn.close()
 
+
 def update_chat_metadata(thread_id: str):
     try:
         conn = sqlite3.connect(config.SQLITE_DB_FILE)
@@ -53,6 +55,7 @@ def update_chat_metadata(thread_id: str):
         print(f"채팅 메타데이터 업데이트 오류: {e}")
     finally:
         conn.close()
+
 
 def get_chat_list():
     try:
@@ -79,6 +82,7 @@ def get_chat_list():
         return []
     finally:
         conn.close()
+
 
 def delete_chat(thread_id: str):
     try:
@@ -110,6 +114,7 @@ def rename_chat(thread_id: str, new_name: str):
         return False
     finally:
         conn.close()
+
 
 def get_chat_name(thread_id: str):
     try:
