@@ -1,0 +1,20 @@
+# Cache files
+.gradio/
+
+# Generated databases
+data/db/chat_db/*
+!data/db/chat_db/.gitkeep
+data/db/chroma_db/*
+!data/db/chroma_db/.gitkeep
+
+# Large model files
+models/*
+!models/.gitkeep
+
+# Temporary files
+temp/
+
+# Other common Python ignores
+__pycache__/
+*.pyc
+.env
