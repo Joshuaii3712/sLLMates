@@ -108,7 +108,7 @@ def create_simple_ui():
     }
     """
     with gr.Blocks(css=css, theme=gr.themes.Soft()) as interface:
-        gr.Markdown("# 💬 RAG + Qwen3 챗봇")
+        gr.Markdown("# 💬 RAG 챗봇")
 
         thread_id_state = gr.State(None)
         

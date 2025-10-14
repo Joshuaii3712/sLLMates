@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Sequence, Dict, List, Optional
 from typing_extensions import Annotated, TypedDict
-
+import langchain
 from langchain.schema import SystemMessage, HumanMessage, AIMessage, BaseMessage
 from langchain_core.messages import ToolMessage
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -11,12 +11,15 @@ from langgraph.graph.message import add_messages
 
 from src.config import SQLITE_DB_FILE
 from src.core.llm import LLM
+from src.core.llm import LLM_llama_cpp
+from src.core.templete import convertMessageToText
 from src.core.trimmer import Trimmer
 from src.core.tools import TOOLS_LIST
-from src.utils.parsers import makeJSONToToolCall
+from src.utils.parsers import parse_llm_output, makeJSONToToolCall
+from src.config import LLMConfig
 
 
-
+# langchain.debug = True
 
 class State(TypedDict):
     variables: Dict[str, str]
@@ -30,7 +33,7 @@ class State(TypedDict):
 
 class LangChainAgent:
     def __init__(self):
-        self.llm = LLM.get_llm()
+        self.llm = LLM_llama_cpp.get_llm()
         self.trimmer = Trimmer()
         self.tools = ToolNode(TOOLS_LIST)
         self.app = self.create_workflow()
@@ -40,17 +43,23 @@ class LangChainAgent:
 
         trimmed_messages = self.trimmer.trimmer.invoke([SystemMessage(filled_system_prompt)] + state["history"] + [state["query"]])
 
-        llm_with_tools = self.llm.bind_tools(TOOLS_LIST)
+        response_llama = self.llm(
+            convertMessageToText(trimmed_messages, tool_bind = True),
+            max_tokens = LLMConfig.max_tokens,
+        )
 
-        response = llm_with_tools.invoke(trimmed_messages)
+        # print("aaaaaaaaaaaaa: " + convertMessageToText(trimmed_messages, tool_bind = True))
+        # print("bbbbbbbbbbbbb: " + repr(response_llama))
 
-        content = response.content.strip()
-        if content.startswith("<tool_call>"):
-            tools_call = AIMessage(content = "", tool_calls = makeJSONToToolCall(content))
+        response = parse_llm_output(response_llama)
+
+        # print("1111111111111: " + repr(response))
+
+        if response.tool_calls:
             return {
                 "variables": state["variables"],
                 "system_prompt": state["system_prompt"],
-                "messages": [tools_call],
+                "messages": [response],
                 "tools_result": None,
                 "query": state["query"],
                 "final_answer": None
@@ -97,7 +106,15 @@ class LangChainAgent:
 
         trimmed_messages = self.trimmer.trimmer.invoke([SystemMessage(filled_system_prompt)] + conversation_messages + state["tools_result"] + [state["query"]])
 
-        response = self.llm.invoke(trimmed_messages)
+        response_llama = self.llm(
+            convertMessageToText(trimmed_messages),
+            max_tokens = LLMConfig.max_tokens,
+        )
+
+        # print("ccccccccccccccc: " + convertMessageToText(trimmed_messages))
+        # print("ddddddddddddddd: " + repr(response_llama))
+
+        response = AIMessage(content = response_llama['choices'][0]['text'])
 
         add_messages = [state["query"]] + state["messages"] + state["tools_result"] + [response]
 
