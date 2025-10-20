@@ -5,8 +5,6 @@ from langchain_core.messages import ToolCall
 from langchain.schema import AIMessage
 
 
-
-
 def makeJSONToToolCall(content_str : str):
     """
     LLM이 생성한 문자열에서 <tool_call> 태그를 찾아 JSON으로 파싱

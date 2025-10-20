@@ -8,52 +8,104 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import START, StateGraph, END
 from langgraph.prebuilt import ToolNode
 from langgraph.graph.message import add_messages
+from langchain_core.messages import trim_messages
+from langchain_community.chat_models import ChatLlamaCpp
 
 from src.config import SQLITE_DB_FILE
-from src.core.llm import LLM
-from src.core.llm import LLM_llama_cpp
-from src.core.templete import convertMessageToText
-from src.core.trimmer import Trimmer
-from src.core.tools import TOOLS_LIST
-from src.utils.parsers import parse_llm_output, makeJSONToToolCall
 from src.config import LLMConfig
+from src.config import TrimmerConfig
+from src.core.tools import TOOL_LIST
+from src.chat_models.ChatLlamaCpp_new import ChatLlamaCpp_new
 
 
-# langchain.debug = True
+langchain.debug = True
+
 
 class State(TypedDict):
+    """요약 추가 예정"""
+
     variables: Dict[str, str]
+    """요약 추가 예정"""
+
     system_prompt: str
+    """요약 추가 예정"""
+
     history: Annotated[Sequence[BaseMessage], add_messages]
+    """요약 추가 예정"""
+
     messages: Optional[List[BaseMessage]]
+    """요약 추가 예정"""
+
     tools_result: Optional[List[ToolMessage]]
+    """요약 추가 예정"""
+
     query: HumanMessage
+    """요약 추가 예정"""
+
     final_answer: Optional[AIMessage]
+    """요약 추가 예정"""
 
 
 class LangChainAgent:
+    """요약 추가 예정
+
+    디테일 추가 예정
+    """
+
+    llm: ChatLlamaCpp
+    """요약 추가 예정"""
+
+    trimmer: any
+    """요약 추가 예정"""
+
+    #tool_index: ToolIndex
+    """요약 추가 예정"""
+
+    tools: ToolNode
+    """요약 추가 예정"""
+
+    app: any
+    """요약 추가 예정"""
+
     def __init__(self):
-        self.llm = LLM_llama_cpp.get_llm()
-        self.trimmer = Trimmer()
-        self.tools = ToolNode(TOOLS_LIST)
+        self.llm = ChatLlamaCpp_new(
+            model_path = LLMConfig.model_path,
+            n_ctx = LLMConfig.n_ctx,
+            f16_kv = LLMConfig.f16_kv,
+            use_mlock = LLMConfig.use_mlock,
+            n_batch = LLMConfig.n_batch,
+            n_gpu_layers = LLMConfig.n_gpu_layers,
+            max_tokens = LLMConfig.max_tokens,
+            temperature = LLMConfig.temperature,
+            top_p = LLMConfig.top_p,
+            stop = LLMConfig.stop,
+            top_k = LLMConfig.top_k,
+            use_mmap = LLMConfig.use_mmap,
+            model_kwargs = LLMConfig.model_kwargs,
+            verbose = LLMConfig.verbose,
+        )
+
+        self.trimmer = trim_messages(
+            max_tokens = TrimmerConfig.max_tokens,
+            strategy = TrimmerConfig.strategy,
+            token_counter = self.llm,
+            include_system = TrimmerConfig.include_system,
+            allow_partial = TrimmerConfig.allow_partial,
+            start_on = TrimmerConfig.start_on,
+        )
+
+        self.tools = ToolNode(TOOL_LIST)
+
         self.app = self.create_workflow()
 
     def query_or_respond(self, state: State):
         filled_system_prompt = state["system_prompt"].format(**state["variables"])
 
-        trimmed_messages = self.trimmer.trimmer.invoke([SystemMessage(filled_system_prompt)] + state["history"] + [state["query"]])
+        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + state["history"] + [state["query"]])
 
-        response_llama = self.llm(
-            convertMessageToText(trimmed_messages, tool_bind = True),
-            max_tokens = LLMConfig.max_tokens,
-        )
+        llm_with_tools = self.llm.bind_tools(TOOL_LIST)
 
-        # print("aaaaaaaaaaaaa: " + convertMessageToText(trimmed_messages, tool_bind = True))
-        # print("bbbbbbbbbbbbb: " + repr(response_llama))
-
-        response = parse_llm_output(response_llama)
-
-        # print("1111111111111: " + repr(response))
+        response = llm_with_tools.invoke(trimmed_messages)
 
         if response.tool_calls:
             return {
@@ -104,17 +156,9 @@ class LangChainAgent:
             if message.type in ("human") or (message.type == "ai" and not message.tool_calls)
         ]
 
-        trimmed_messages = self.trimmer.trimmer.invoke([SystemMessage(filled_system_prompt)] + conversation_messages + state["tools_result"] + [state["query"]])
+        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + conversation_messages + state["tools_result"] + [state["query"]])
 
-        response_llama = self.llm(
-            convertMessageToText(trimmed_messages),
-            max_tokens = LLMConfig.max_tokens,
-        )
-
-        # print("ccccccccccccccc: " + convertMessageToText(trimmed_messages))
-        # print("ddddddddddddddd: " + repr(response_llama))
-
-        response = AIMessage(content = response_llama['choices'][0]['text'])
+        response = self.llm.invoke(trimmed_messages)
 
         add_messages = [state["query"]] + state["messages"] + state["tools_result"] + [response]
 
@@ -143,8 +187,3 @@ class LangChainAgent:
         memory = SqliteSaver(conn=sqlite3.connect(SQLITE_DB_FILE, check_same_thread = False))
         
         return workflow.compile(checkpointer = memory)
-    
-
-
-
-agent = LangChainAgent()

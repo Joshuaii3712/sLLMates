@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from langchain.schema import HumanMessage, AIMessage
 
-from src.core.agent import agent
+from src.core.agent import LangChainAgent
 from src.config import SYSTEM_PROMPT, VARIABLES
 from src.db.metadata import (
     save_chat_metadata, update_chat_metadata, get_chat_list,
@@ -11,6 +11,7 @@ from src.db.metadata import (
 )
 
 
+agent = LangChainAgent()
 
 
 # UI Helper Functions

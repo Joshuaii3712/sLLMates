@@ -2,14 +2,16 @@ import os
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.config import DATA_DIR, CHROMA_DB_PATH, RAGConfig
-from src.core.embedding_model import EmbeddingModel
-
-
+from src.config import EmbeddingConfig
 
 
 class ChromaDBVectorStore:
+
+    vector_store: Chroma
+
     def __init__(self):
         if not os.path.exists(CHROMA_DB_PATH):
             documents_path = os.path.join(DATA_DIR, "documents")
@@ -25,7 +27,11 @@ class ChromaDBVectorStore:
 
             self.vector_store = Chroma(
                 persist_directory = CHROMA_DB_PATH,
-                embedding_function = EmbeddingModel.get_embedding_model()
+                embedding_function = HuggingFaceEmbeddings(
+                    model_name = EmbeddingConfig.model_name,
+                    model_kwargs = EmbeddingConfig.model_kwargs,
+                    encode_kwargs = EmbeddingConfig.encode_kwargs,
+                )
             )
 
             batch_size = RAGConfig.batch_size
@@ -36,5 +42,9 @@ class ChromaDBVectorStore:
         else:
             self.vector_store = Chroma(
                 persist_directory = CHROMA_DB_PATH,
-                embedding_function = EmbeddingModel.get_embedding_model()
+                embedding_function = HuggingFaceEmbeddings(
+                    model_name = EmbeddingConfig.model_name,
+                    model_kwargs = EmbeddingConfig.model_kwargs,
+                    encode_kwargs = EmbeddingConfig.encode_kwargs,
+                )
             )
