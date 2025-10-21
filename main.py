@@ -2,17 +2,15 @@ import os
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID' 
 
-from src.ui.app import create_simple_ui
 from src.db.metadata import init_chat_metadata_db
-
-
+from src.ui.app import create_simple_ui
 
 
 if __name__ == "__main__":
 
-    print("초기 설정 시작...")
+    print("메타데이터 설정 시작...")
     init_chat_metadata_db()
-    print("초기 설정 끝")
+    print("메타데이터 설정 끝")
 
     print("챗봇 UI 설정 시작...")
     interface = create_simple_ui()
