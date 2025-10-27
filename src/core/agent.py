@@ -77,16 +77,11 @@ class LangChainAgent:
                 use_mlock = LLMConfig.use_mlock,
                 n_batch = LLMConfig.n_batch,
                 n_gpu_layers = LLMConfig.n_gpu_layers,
-                max_tokens = LLMConfig.max_tokens,
-                temperature = LLMConfig.temperature,
-                top_p = LLMConfig.top_p,
-                stop = LLMConfig.stop,
-                top_k = LLMConfig.top_k,
                 use_mmap = LLMConfig.use_mmap,
                 verbose = LLMConfig.verbose,
                 main_gpu = LLMConfig.model_kwargs["main_gpu"],
                 tensor_split = LLMConfig.model_kwargs["tensor_split"], 
-                min_p = LLMConfig.model_kwargs["min_p"],
+                flash_attn = LLMConfig.model_kwargs["flash_attn"],
             )
         else:
             self.llm = ChatLlamaCpp_new(
@@ -122,7 +117,13 @@ class LangChainAgent:
     def query_or_respond(self, state: State):
         filled_system_prompt = state["system_prompt"].format(**state["variables"])
 
-        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + state["history"] + [state["query"]])
+        conversation_messages = [
+            message
+            for message in state["history"]
+            if message.type in ("human") or (message.type == "ai" and not message.tool_calls)
+        ]
+
+        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + conversation_messages + [state["query"]])
 
         if USING_LLAMA:
             response_data = self.llm.create_completion(

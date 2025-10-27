@@ -38,7 +38,9 @@ SQLITE_DB_FILE = str(DATA_DIR / "db" / "chat_db" / "threads.sqlite")
 
 
 # Llama 클래스 사용 설정
+
 USING_LLAMA = True
+"""요약 추가 예정"""
 
 
 # 모델 설정
@@ -55,14 +57,18 @@ class LLMConfig:
     n_gpu_layers = -1
     max_tokens = -1
     temperature = 1.0
+    # temperature = 0.8
     top_p = 1
+    # top_p = 0.95
     stop = ["<|end_of_text|>", "<|eot_id|>"]
+    # stop = ["<|end_of_text|>", "<|eot_id|>"]
     top_k = 20
     use_mmap = True
     model_kwargs = {
         "main_gpu": 1, # gpu 0, 1 중 1을 메인 gpu로 선택
-        "tensor_split": [1, 1], # 50:50으로 두 gpu의 vram에 모델 레이어를 나누어 올림 
+        "tensor_split": [0.3, 0.7], # 50:50으로 두 gpu의 vram에 모델 레이어를 나누어 올림 
         "min_p": 0,
+        "flash_attn": True,
     }
     verbose = True
 
@@ -94,7 +100,7 @@ class RAGConfig:
     chunk_size = 200
     chunk_overlap = 50
     batch_size = 16
-    retrieval_k = 10
+    retrieval_k = 5
 
 
 # 시스템 프롬프트 및 변수
@@ -108,3 +114,8 @@ SYSTEM_PROMPT = """
 You are Llama3.1, a large language model trained by Meta, based on the Llama architecture. You are chatting with the user via the Chating app. Never use emojis unless explicitly asked to. When you receive a tool call response, use the output to format an answer to the orginal user question. The response language is {language}.
 """
 """요약 추가 예정"""
+
+# SYSTEM_PROMPT = """
+# You are Llama3.1, a large language model trained by Meta, based on the Llama architecture. You are chatting with the user via the Chating app. Never use emojis unless explicitly asked to. When you receive a tool call response, use the output to format an answer to the orginal user question. The response language is {language}.
+# """
+# """요약 추가 예정"""

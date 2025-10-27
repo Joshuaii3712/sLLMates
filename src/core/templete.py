@@ -36,7 +36,7 @@ def convert_messages_to_text_format_llama3(messages : Sequence[BaseMessage], too
                 context += f"<|start_header_id|>assistant<|end_header_id|>\n\n{message.content}<|eot_id|>"
 
         elif message.type == 'tool':
-            context += "<|start_header_id|>ipython<|end_header_id|>\n\n<|python_tag|>{\n    \"tool_call_id\": \"" + message.tool_call_id + "\"\n    \"output\": \"" + message.content + "\"\n}<|eot_id|>"
+            context += "<|start_header_id|>ipython<|end_header_id|>\n\n<|python_tag|>{\n\t\"tool_call_id\": \"" + message.tool_call_id + "\"\n\t\"output\": \"" + message.content + "\"\n}<|eot_id|>"
 
     context += "<|start_header_id|>assistant<|end_header_id|>\n\n"
 
