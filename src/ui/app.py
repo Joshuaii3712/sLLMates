@@ -265,12 +265,20 @@ def create_simple_ui():
             fn=create_chatbot_response,           # 기존 send_message_with_update 대신 직접 사용
             inputs=[msg, chatbot, thread_id_state],
             outputs=[chatbot, msg]
+        ).then(
+            refresh_list,
+            inputs=[thread_id_state],
+            outputs=[chat_dropdown]
         )
 
         msg.submit(
             fn=create_chatbot_response,
             inputs=[msg, chatbot, thread_id_state],
             outputs=[chatbot, msg]
+        ).then(
+            refresh_list,
+            inputs=[thread_id_state],
+            outputs=[chat_dropdown]
         )
 
         # 초기 로드
