@@ -36,9 +36,6 @@ CHROMA_DB_PATH = str(DATA_DIR / "db" / "chroma_db")
 SQLITE_DB_FILE = str(DATA_DIR / "db" / "chat_db" / "threads.sqlite")
 """요약 추가 예정"""
 
-BIO_SQLITE_DB_FILE = str(DATA_DIR / "db" / "bio_db" / "bio.sqlite")
-"""요약 추가 예정"""
-
 BIO_CHROMA_DB_PATH = str(DATA_DIR / "db" / "bio_chroma_db")
 """요약 추가 예정"""
 
@@ -72,7 +69,7 @@ class LLMConfig:
     use_mmap = True
     model_kwargs = {
         "main_gpu": 1, # gpu 0, 1 중 1을 메인 gpu로 선택
-        "tensor_split": [0.3, 0.7], # 50:50으로 두 gpu의 vram에 모델 레이어를 나누어 올림 
+        "tensor_split": [0.05, 0.95], # 50:50으로 두 gpu의 vram에 모델 레이어를 나누어 올림 
         "min_p": 0,
         "flash_attn": True,
     }
@@ -117,27 +114,16 @@ VARIABLES = {
 """요약 추가 예정"""
 
 SYSTEM_PROMPT = """
-You are Llama3.1, an AI assistant with long-term memory. Keep conversations natural and brief. The response language is {language}.
+You are Llama3.1, a large language model trained by Meta, based on the Llama architecture. You are chatting with the user via the Chating app. Never use emojis unless explicitly asked to. When you receive a tool call response, use the output to format an answer to the orginal user question. The response language is {language}.
 
 IMPORTANT: When you learn a NEW, lasting fact about the user, you MUST save it to memory. At the very END of your response, wrap each fact in tags like this:
-
-<|start_bio|>[A single, clear fact about the user]<importance>[1-10]</importance><|end_bio|>
-
-Guidelines:
-- Save only user-specific FACTS (e.g., name, job, core preferences).
-- Do NOT save temporary feelings, opinions, or questions.
-- Importance Score: 1-3 (minor details), 4-7 (significant info), 8-10 (critical facts).
-
-Example:
-User: I live in Seoul and work as a software engineer.
-Assistant: That's great! Seoul is a wonderful city.
-<|start_bio|>The user lives in Seoul<importance>7</importance><|end_bio|>
-<|start_bio|>The user works as a software engineer<importance>8</importance><|end_bio|>
-
-IMPORTANT: If you decide to call a tool, follow the rules in tool_prompt.
-Respond ONLY in JSON format as specified in tool_prompt. 
-Do NOT include any other text.
+<bio>[A single, clear fact about the user]<importance>[1-10]</importance></bio>
+For example, if you learn that the user's favorite color is blue, you would write:
+<bio>The user's favorite color is blue.<importance>5</importance></bio>
 """
+
+BIO_EXPLANATION_PROMPT = """
+\nBelow are important information about the user:\n"""
 
 # SYSTEM_PROMPT = """
 # You are Llama3.1, a large language model trained by Meta, based on the Llama architecture. You are chatting with the user via the Chating app. Never use emojis unless explicitly asked to. When you receive a tool call response, use the output to format an answer to the orginal user question. The response language is {language}.

@@ -56,8 +56,12 @@ class BioChromaDBVectorStore:
     def __init__(self):
         self.vector_store = Chroma(
             collection_name=self.collection_name,
-            persist_directory = CHROMA_DB_PATH,
-            embedding_function = None 
+            persist_directory = BIO_CHROMA_DB_PATH,
+            embedding_function = HuggingFaceEmbeddings(
+                    model_name = EmbeddingConfig.model_name,
+                    model_kwargs = EmbeddingConfig.model_kwargs,
+                    encode_kwargs = EmbeddingConfig.encode_kwargs,
+                ) 
         )
 
     def embed_text(self, text: str):

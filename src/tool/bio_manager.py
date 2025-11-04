@@ -2,6 +2,7 @@
 BioManager - Bio 데이터 임베딩 및 저장을 위한 멀티프로세싱 관리 클래스
 """
 import os
+import re
 from multiprocessing import Process, Queue
 from typing import List, Dict
 import time
@@ -27,12 +28,32 @@ class BioManager:
         self.writer_process = None
         
         # Vector Store 초기화 (메인 프로세스에서)
-        self.vector_store = BioChromaDBVectorStore()
+        #self.vector_store = BioChromaDBVectorStore()
         
         # 백그라운드 Writer 프로세스 시작
-        self._start_writer_process()
+        #self._start_writer_process()
         
         print(f"[BioManager] 초기화 완료: Writer 프로세스 실행 중")
+
+
+    def extract_bio_with_importance(self, text: str) -> List[Dict[str, any]]:
+        pattern = r"<bio>(.*?)<importance>(\d+)</importance></bio>"
+        results = re.findall(pattern, text, re.DOTALL)
+        bio_list = []
+        for bio_text, importance in results:
+            bio_list.append({
+                "text": bio_text.strip(),
+                "importance": min(int(importance), 10)  # 최대 10으로 제한
+            })
+        return bio_list
+    
+    def clean_bio_tags(self, text: str) -> str:
+        return re.sub(
+            r"<bio>.*?</bio>", 
+            "", 
+            text, 
+            flags=re.DOTALL
+        ).strip()
     
     def _start_writer_process(self):
         """백그라운드 Writer 프로세스 시작"""
