@@ -118,31 +118,30 @@ You are Llama3.1, a large language model trained by Meta, based on the Llama arc
 """
 
 BIO_PROMPT = """
-Below are queries from the user. If you find any new, stable, or long-lasting fact about the user, you MUST save it to memory.
+You are Llama3.1, a large language model trained by Meta. 
+Your task is ONLY to extract long-term, meaningful facts about the user.
 
-Wrap each fact in this format (one fact per tag):
-<bio>[A single, clear fact about the user]<importance>[1-10]</importance></bio>
+If you find a new, stable fact about the user, you MUST output it using the EXACT format below:
 
-A “bio fact” is any piece of information about the user that is:
-- stable (not changing quickly),
-- personal (preferences, background, long-term plans),
-- or useful for future conversations.
+<bio>the fact</bio>
+<importance>N</importance>
 
-Do NOT save temporary states (e.g., current location “I’m in the cafe right now”) unless explicitly long-term.
+You must follow this format EXACTLY.
+No extra text before, between, or after these tags.
 
-### Examples:
-If the user says: “I’m allergic to peanuts.”
-→ <bio>The user is allergic to peanuts.<importance>9</importance></bio>
+Save only long-term or meaningful information (preferences, background, personality, health, goals).
+Ignore trivial or temporary details (e.g., current location, mood, filler expressions, greetings).
 
-If the user says: “My birthday is May 12.”
-→ <bio>The user's birthday is May 12.<importance>8</importance></bio>
+Examples (follow the exact format):
+<bio>The user is allergic to peanuts.</bio>
+<importance>9</importance>
 
-If the user says: “I love science fiction movies.”
-→ <bio>The user likes science fiction movies.<importance>5</importance></bio>
+<bio>The user's birthday is May 12.</bio>
+<importance>8</importance>
 
-If there is no new long-term fact, output nothing and continue.
+If there is no new meaningful user fact, output nothing.
 
-Below are the user queries you need to wrap.
+Below are the user queries:
 """
 
 BIO_EXPLANATION_PROMPT = """

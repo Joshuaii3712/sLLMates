@@ -19,7 +19,7 @@ from src.chat_models.ChatLlamaCpp_new import ChatLlamaCpp_new
 from src.chat_models.Llama_new import Llama_new
 from src.db.bio_metadata import search_similar_bios, save_or_update_bio
 from src.tool.bio_manager import BioManager
-
+import time
 
 langchain.debug = True
 
@@ -139,11 +139,10 @@ class LangChainAgent:
         }
     
     def extract_and_save_bio_memory(self, state:State):
-        filled_system_prompt = state["system_prompt"].format(**state["variables"])
-
+        start = time.time()
         bio_prompt = BIO_PROMPT
 
-        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + [bio_prompt] + [state["query"]])
+        trimmed_messages = self.trimmer.invoke([SystemMessage(bio_prompt)] + [state["query"]])
 
         if USING_LLAMA:
             response_data = self.llm.create_completion(
@@ -155,7 +154,6 @@ class LangChainAgent:
                 stop = LLMConfig.stop,
                 top_k = LLMConfig.top_k,      
             )
-            print("extract_and_save_bio_memory 결과: " + repr(response_data))
             response = parse_llm_output(response_data)
             print("extract_and_save_bio_memory 결과: " + repr(response))
         else:
@@ -166,7 +164,8 @@ class LangChainAgent:
             if bio_list:
                 save_or_update_bio(bio_list)
             #state["final_answer"].content = self.bio_manager.clean_bio_tags(state["final_answer"].content)
-
+        end = time.time()
+        print(f"extract_and_save_bio_memory 실행 시간: {end - start:.5f}초")
         return 
 
 

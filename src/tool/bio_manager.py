@@ -37,13 +37,18 @@ class BioManager:
 
 
     def extract_bio_with_importance(self, text: str) -> List[Dict[str, any]]:
-        pattern = r"<bio>(.*?)<importance>(\d+)</importance></bio>"
+        pattern = r"<bio>(.*?)</bio>\s*<importance>\s*(\d+)\s*</importance>"
         results = re.findall(pattern, text, re.DOTALL)
+        
         bio_list = []
         for bio_text, importance in results:
+            cleaned = bio_text.strip()
+            if not cleaned:
+                continue
+            importance_value = max(1, min(int(importance), 10))
             bio_list.append({
-                "text": bio_text.strip(),
-                "importance": min(int(importance), 10)  # 최대 10으로 제한
+                "text": cleaned,
+                "importance": importance_value
             })
         return bio_list
     
