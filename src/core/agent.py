@@ -124,7 +124,7 @@ class LangChainAgent:
         self.bio_manager = BioManager()
 
     def retrieve_bio_memory(self, state: State):
-        bio_dict = search_similar_bios(state["query"].content, 30)
+        bio_dict = search_similar_bios(state["query"].content, 5)
 
         bio_result = BIO_EXPLANATION_PROMPT
 
