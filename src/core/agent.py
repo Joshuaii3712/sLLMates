@@ -11,7 +11,7 @@ from langgraph.graph.message import add_messages
 from langchain_core.messages import trim_messages
 from langchain_community.chat_models import ChatLlamaCpp
 
-from src.config import SQLITE_DB_FILE, USING_LLAMA, LLMConfig, TrimmerConfig, BIO_EXPLANATION_PROMPT, BIO_PROMPT
+from src.config import SQLITE_DB_FILE, USING_LLAMA, LLMConfig, TrimmerConfig, BIO_EXPLANATION_PROMPT, BIO_PROMPT, TOOL_PROMPT
 from src.core.tools import TOOL_LIST
 from src.core.templete import convert_messages_to_text_format_llama3
 from src.utils.parsers import parse_llm_output
@@ -174,15 +174,9 @@ class LangChainAgent:
         return 
 
     def query_or_respond(self, state: State):
-        filled_system_prompt = state["system_prompt"].format(**state["variables"])
+        filled_system_prompt = TOOL_PROMPT.format(**state["variables"])
 
-        conversation_messages = [
-            message
-            for message in state["history"]
-            if message.type in ("human") or (message.type == "ai" and not message.tool_calls)
-        ]
-
-        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + [state["bio_result"]] + conversation_messages + [state["query"]])
+        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + [state["query"]])
 
         if USING_LLAMA:
             response_data = self.llm.create_completion(
@@ -211,16 +205,13 @@ class LangChainAgent:
                 "final_answer": None
             }
         
-        add_messages = [state["query"]] + [response]
-
         return {
             "variables": state["variables"],
             "system_prompt": state["system_prompt"],
-            "history": add_messages,
             "messages": None,
             "tools_result": None,
             "query": state["query"],
-            "final_answer": response
+            "final_answer": None
         }
 
     def check_for_tools(self, state: State):
@@ -242,7 +233,7 @@ class LangChainAgent:
         }
 
     def generate(self, state: State):
-        filled_system_prompt = state["system_prompt"].format(**state["variables"])
+        filled_system_prompt = state["system_prompt"].format(**state["variables"]) + state["bio_result"]
 
         conversation_messages = [
             message
@@ -250,7 +241,13 @@ class LangChainAgent:
             if message.type in ("human") or (message.type == "ai" and not message.tool_calls)
         ]
 
-        trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + [state["bio_result"]] + conversation_messages + state["tools_result"] + [state["query"]])
+
+        if state["tools_result"]:
+            trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)]+ conversation_messages + state["tools_result"] + [state["query"]])
+            print("tools_result 존재")
+        else:
+            trimmed_messages = self.trimmer.invoke([SystemMessage(filled_system_prompt)] + conversation_messages + [state["query"]])
+            print("tools_result 없음")
 
         if USING_LLAMA:
             response_data = self.llm.create_completion(
@@ -268,8 +265,11 @@ class LangChainAgent:
         else:
             response = self.llm.invoke(trimmed_messages)
 
-        add_messages = [state["query"]] + state["messages"] + state["tools_result"] + [response]
-
+        if state["tools_result"]:
+            add_messages = [state["query"]] + state["messages"] + state["tools_result"] + [response]
+        else:
+            add_messages = [state["query"]] + [response]
+            
         return {
             "variables": state["variables"],
             "system_prompt": state["system_prompt"],
@@ -291,7 +291,7 @@ class LangChainAgent:
         
         workflow.add_edge(START, "retrieve_bio_memory")
         workflow.add_edge("retrieve_bio_memory", "query_or_respond")
-        workflow.add_conditional_edges("query_or_respond", self.check_for_tools, {"no_tool": "extract_and_save_bio_memory", "tools": "run_tools_and_pass_through_state"})
+        workflow.add_conditional_edges("query_or_respond", self.check_for_tools, {"no_tool": "generate", "tools": "run_tools_and_pass_through_state"})
         workflow.add_edge("run_tools_and_pass_through_state", "generate")
         workflow.add_edge("generate", "extract_and_save_bio_memory")
         workflow.add_edge("extract_and_save_bio_memory", END)
