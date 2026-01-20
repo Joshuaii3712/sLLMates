@@ -1,6 +1,6 @@
-# 💬 Qwen3 & LangGraph 기반 RAG 챗봇
+# 💬 LangGraph 기반 RAG 챗봇
 
-이 프로젝트는 Qwen3-4B 모델을 기반으로 **LangGraph**를 사용하여 에이전트 워크플로우를 구성하고, **RAG (Retrieval-Augmented Generation)** 기술을 접목한 다목적 챗봇입니다. 사용자와의 대화 기록은 SQLite 데이터베이스에 영구적으로 저장되며, **Gradio**를 통해 직관적인 웹 UI를 제공합니다.
+이 프로젝트는 sLLM 모델을 기반으로 **LangGraph**를 사용하여 에이전트 워크플로우를 구성하고, **RAG (Retrieval-Augmented Generation)** 기술을 접목한 다목적 챗봇입니다. 사용자와의 대화 기록은 SQLite 데이터베이스에 영구적으로 저장되며, **Gradio**를 통해 직관적인 웹 UI를 제공합니다.
 
 [Image of a modern chatbot interface]
 
@@ -61,7 +61,7 @@ pip install -r requirements.txt
 
 다운로드한 모델과 RAG용 문서를 아래 경로에 맞게 배치합니다.
 
-* **LLM 모델**: `/models/Qwen3-4B-Instruct-2507-Q4_K_M.gguf`
+* **LLM 모델**: `/models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf`
 * **토크나이저**: `/models/Qwen3-4B-Instruct-2507/`
 * **임베딩 모델**: `/models/Qwen3-Embedding-0.6B/`
 * **RAG 문서**: `/data/documents/` 폴더 내에 `.txt` 파일들
